@@ -1,6 +1,12 @@
 Changelog
 =========
 
+## 2.22.0
+
+### Enhancements
+
+* (Web) Added very basic web support
+
 ## 2.21.0 (2019-06-12)
 
 ### Enhancements
