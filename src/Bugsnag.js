@@ -1,7 +1,7 @@
-/* global ErrorUtils, __DEV__ */
+/* global globalThis, ErrorUtils, __DEV__ */
 
 import serializeForNativeLayer from './NativeSerializer'
-import NativeClient from './ClientWrapper';
+import NativeClient from './ClientWrapper'
 
 const BREADCRUMB_MAX_LENGTH = 30
 const CONSOLE_LOG_METHODS = [ 'log', 'debug', 'info', 'warn', 'error' ].filter(method =>

@@ -1,31 +1,31 @@
-import bugsnag from "@bugsnag/js";
-import util from "util";
+import bugsnag from '@bugsnag/js'
+import util from 'util'
 
-let client;
+let client
 
 export default {
   startWithOptions: options => {
     client = bugsnag(options)
   },
   notify: payload => {
-      return util.promisify(client.notify(payload))
+    return util.promisify(client.notify(payload))
   },
   setUser: ({ id, name, email }) => {
-      client.user = { id, name, email };
+    client.user = { id, name, email }
   },
   clearUser: () => {
-      client.user = null;
+    client.user = null
   },
   startSession: () => {
-      client.startSession();
+    client.startSession()
   },
   stopSession: () => {
-      client.stopSession();
+    client.stopSession()
   },
   resumeSession: () => {
-      client.resumeSession();
+    client.resumeSession()
   },
   leaveBreadcrumb: ({ name, type, metadata }) => {
-      client.leaveBreadcrumb(name, metadata);
+    client.leaveBreadcrumb(name, metadata)
   }
-};
+}
