@@ -1,9 +1,8 @@
 {
-  "name": "bugsnag-react-native",
+  "name": "@getmargin/bugsnag-react-native",
   "homepage": "https://www.bugsnag.com/platforms/react-native-error-reporting/",
-  "repository": "https://github.com/bugsnag/bugsnag-react-native.git",
-  "bugs": "https://github.com/bugsnag/bugsnag-react-native/issues",
-  "version": "2.21.0",
+  "repository": "https://github.com/getmargin/bugsnag-react-native.git",
+  "version": "2.21.0-alpha3",
   "license": "MIT",
   "main": "index.js",
   "types": "index.d.ts",
