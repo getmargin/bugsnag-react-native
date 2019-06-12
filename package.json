@@ -11,7 +11,8 @@
   "dependencies": {
     "iserror": "^0.0.2",
     "promise": "^7",
-    "prop-types": "^15.6.0"
+    "prop-types": "^15.6.0",
+    "@bugsnag/js": "6.3.0"
   },
   "files": [
     "index.js",

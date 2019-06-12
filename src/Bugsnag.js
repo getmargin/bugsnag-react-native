@@ -1,9 +1,7 @@
 /* global ErrorUtils, __DEV__ */
 
-import { NativeModules } from 'react-native'
 import serializeForNativeLayer from './NativeSerializer'
-
-const NativeClient = NativeModules.BugsnagReactNative
+import NativeClient from './ClientWrapper';
 
 const BREADCRUMB_MAX_LENGTH = 30
 const CONSOLE_LOG_METHODS = [ 'log', 'debug', 'info', 'warn', 'error' ].filter(method =>
@@ -41,7 +39,7 @@ export class Client {
    * Bugsnag before invoking the previous handler, if any.
    */
   handleUncaughtErrors = () => {
-    if (ErrorUtils) {
+    if (globalThis.ErrorUtils) {
       const previousHandler = ErrorUtils.getGlobalHandler()
 
       ErrorUtils.setGlobalHandler((error, isFatal) => {
