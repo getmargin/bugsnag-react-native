@@ -1,4 +1,6 @@
-/* global globalThis, ErrorUtils, __DEV__ */
+/* global ErrorUtils, __DEV__ */
+
+import { Platform } from "react-native";
 
 import serializeForNativeLayer from './NativeSerializer'
 import NativeClient from './ClientWrapper'
@@ -39,7 +41,11 @@ export class Client {
    * Bugsnag before invoking the previous handler, if any.
    */
   handleUncaughtErrors = () => {
-    if (globalThis.ErrorUtils) {
+    if (Platform.OS === "web") {
+      return;
+    }
+    
+    if (ErrorUtils) {
       const previousHandler = ErrorUtils.getGlobalHandler()
 
       ErrorUtils.setGlobalHandler((error, isFatal) => {
