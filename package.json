@@ -2,7 +2,7 @@
   "name": "@getmargin/bugsnag-react-native",
   "homepage": "https://www.bugsnag.com/platforms/react-native-error-reporting/",
   "repository": "https://github.com/getmargin/bugsnag-react-native.git",
-  "version": "2.21.0-alpha6",
+  "version": "2.21.0-alpha7",
   "license": "MIT",
   "main": "index.js",
   "types": "index.d.ts",

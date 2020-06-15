@@ -9,7 +9,7 @@ import com.facebook.react.uimanager.ViewManager;
 import java.util.Collections;
 import java.util.List;
 
-class BugsnagPackage implements ReactPackage {
+public class BugsnagPackage implements ReactPackage {
 
     public List<Class<? extends JavaScriptModule>> createJSModules() {
         return Collections.emptyList();
