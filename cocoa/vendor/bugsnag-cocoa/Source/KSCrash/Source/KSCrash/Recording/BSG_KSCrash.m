@@ -24,6 +24,7 @@
 // THE SOFTWARE.
 //
 
+#import <mach-o/dyld.h>
 #import "BSG_KSCrashAdvanced.h"
 
 #import "BSG_KSCrashC.h"
@@ -31,6 +32,7 @@
 #import "BSG_KSJSONCodecObjC.h"
 #import "BSG_KSSingleton.h"
 #import "BSG_KSSystemCapabilities.h"
+#import "BSG_KSMachHeaders.h"
 #import "NSError+BSG_SimpleConstructor.h"
 
 //#define BSG_KSLogger_LocalLevel TRACE
@@ -47,6 +49,10 @@
 /** The directory under "Caches" to store the crash reports. */
 #ifndef BSG_KSCRASH_DefaultReportFilesDirectory
 #define BSG_KSCRASH_DefaultReportFilesDirectory @"KSCrashReports"
+#endif
+
+#ifndef BSG_INITIAL_MACH_BINARY_IMAGE_ARRAY_SIZE
+#define BSG_INITIAL_MACH_BINARY_IMAGE_ARRAY_SIZE 400
 #endif
 
 // ============================================================================
@@ -89,18 +95,13 @@
 @synthesize userInfo = _userInfo;
 @synthesize deleteBehaviorAfterSendAll = _deleteBehaviorAfterSendAll;
 @synthesize handlingCrashTypes = _handlingCrashTypes;
-@synthesize deadlockWatchdogInterval = _deadlockWatchdogInterval;
 @synthesize printTraceToStdout = _printTraceToStdout;
 @synthesize onCrash = _onCrash;
 @synthesize crashReportStore = _crashReportStore;
 @synthesize bundleName = _bundleName;
 @synthesize logFilePath = _logFilePath;
 @synthesize nextCrashID = _nextCrashID;
-@synthesize searchThreadNames = _searchThreadNames;
-@synthesize searchQueueNames = _searchQueueNames;
 @synthesize introspectMemory = _introspectMemory;
-@synthesize catchZombies = _catchZombies;
-@synthesize doNotIntrospectClasses = _doNotIntrospectClasses;
 @synthesize maxStoredReports = _maxStoredReports;
 @synthesize suspendThreadsForUserReported = _suspendThreadsForUserReported;
 @synthesize reportWhenDebuggerIsAttached = _reportWhenDebuggerIsAttached;
@@ -111,24 +112,6 @@
 // ============================================================================
 #pragma mark - Lifecycle -
 // ============================================================================
-
-- (void)setDemangleLanguages:(BSG_KSCrashDemangleLanguage)demangleLanguages {
-    self.crashReportStore.demangleCPP =
-        (demangleLanguages & BSG_KSCrashDemangleLanguageCPlusPlus) != 0;
-    self.crashReportStore.demangleSwift =
-        (demangleLanguages & BSG_KSCrashDemangleLanguageSwift) != 0;
-}
-
-- (BSG_KSCrashDemangleLanguage)demangleLanguages {
-    BSG_KSCrashDemangleLanguage languages = 0;
-    if (self.crashReportStore.demangleCPP) {
-        languages |= BSG_KSCrashDemangleLanguageCPlusPlus;
-    }
-    if (self.crashReportStore.demangleSwift) {
-        languages |= BSG_KSCrashDemangleLanguageSwift;
-    }
-    return languages;
-}
 
 IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
 
@@ -152,10 +135,7 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
         self.nextCrashID = [NSUUID UUID].UUIDString;
         self.crashReportStore = [BSG_KSCrashReportStore storeWithPath:storePath];
         self.deleteBehaviorAfterSendAll = BSG_KSCDeleteAlways;
-        self.searchThreadNames = NO;
-        self.searchQueueNames = NO;
         self.introspectMemory = YES;
-        self.catchZombies = NO;
         self.maxStoredReports = 5;
 
         self.suspendThreadsForUserReported = YES;
@@ -192,11 +172,6 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
     _handlingCrashTypes = bsg_kscrash_setHandlingCrashTypes(handlingCrashTypes);
 }
 
-- (void)setDeadlockWatchdogInterval:(double)deadlockWatchdogInterval {
-    _deadlockWatchdogInterval = deadlockWatchdogInterval;
-    bsg_kscrash_setDeadlockWatchdogInterval(deadlockWatchdogInterval);
-}
-
 - (void)setPrintTraceToStdout:(bool)printTraceToStdout {
     _printTraceToStdout = printTraceToStdout;
     bsg_kscrash_setPrintTraceToStdout(printTraceToStdout);
@@ -207,24 +182,9 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
     bsg_kscrash_setCrashNotifyCallback(onCrash);
 }
 
-- (void)setSearchThreadNames:(bool)searchThreadNames {
-    _searchThreadNames = searchThreadNames;
-    bsg_kscrash_setSearchThreadNames(searchThreadNames);
-}
-
-- (void)setSearchQueueNames:(bool)searchQueueNames {
-    _searchQueueNames = searchQueueNames;
-    bsg_kscrash_setSearchQueueNames(searchQueueNames);
-}
-
 - (void)setIntrospectMemory:(bool)introspectMemory {
     _introspectMemory = introspectMemory;
     bsg_kscrash_setIntrospectMemory(introspectMemory);
-}
-
-- (void)setCatchZombies:(bool)catchZombies {
-    _catchZombies = catchZombies;
-    bsg_kscrash_setCatchZombies(catchZombies);
 }
 
 - (void)setSuspendThreadsForUserReported:(BOOL)suspendThreadsForUserReported {
@@ -249,23 +209,6 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
         writeBinaryImagesForUserReported);
 }
 
-- (void)setDoNotIntrospectClasses:(NSArray *)doNotIntrospectClasses {
-    _doNotIntrospectClasses = doNotIntrospectClasses;
-    size_t count = [doNotIntrospectClasses count];
-    if (count == 0) {
-        bsg_kscrash_setDoNotIntrospectClasses(nil, 0);
-    } else {
-        NSMutableData *data =
-            [NSMutableData dataWithLength:count * sizeof(const char *)];
-        const char **classes = data.mutableBytes;
-        for (size_t i = 0; i < count; i++) {
-            classes[i] = [doNotIntrospectClasses[i]
-                cStringUsingEncoding:NSUTF8StringEncoding];
-        }
-        bsg_kscrash_setDoNotIntrospectClasses(classes, count);
-    }
-}
-
 - (NSString *)crashReportPath {
     return [self.crashReportStore pathToFileWithId:self.nextCrashID];
 }
@@ -282,13 +225,16 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
 }
 
 - (BOOL)install {
+    // Maintain a cache of info about dynamically loaded binary images
+    [self listenForLoadedBinaries];
+
     _handlingCrashTypes = bsg_kscrash_install(
         [self.crashReportPath UTF8String], [self.recrashReportPath UTF8String],
         [self.stateFilePath UTF8String], [self.nextCrashID UTF8String]);
     if (self.handlingCrashTypes == 0) {
         return false;
     }
-
+    
 #if BSG_KSCRASH_HAS_UIKIT
     NSNotificationCenter *nCenter = [NSNotificationCenter defaultCenter];
     [nCenter addObserver:self
@@ -314,6 +260,21 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
 #endif
 
     return true;
+}
+
+/**
+ * Set up listeners for un/loaded frameworks.  Maintaining our own list of framework Mach
+ * headers means that we avoid potential deadlock situations where we try and suspend
+ * lock-holding threads prior to loading mach headers as part of our normal event handling
+ * behaviour.
+ */
+- (void)listenForLoadedBinaries {
+    bsg_check_unfair_lock_support();
+    bsg_initialise_mach_binary_headers(BSG_INITIAL_MACH_BINARY_IMAGE_ARRAY_SIZE);
+
+    // Note: Access to DYLD's binary image store is guarded by locks.
+    _dyld_register_func_for_remove_image(&bsg_mach_binary_image_removed);
+    _dyld_register_func_for_add_image(&bsg_mach_binary_image_added);
 }
 
 - (void)sendAllReportsWithCompletion:
@@ -377,14 +338,7 @@ IMPLEMENT_EXCLUSIVE_SHARED_INSTANCE(BSG_KSCrash)
                                     depth,
                                     terminateProgram);
 
-    // If bsg_kscrash_reportUserException() returns, we did not terminate.
-    // Set up IDs and paths for the next crash.
-
-    self.nextCrashID = [NSUUID UUID].UUIDString;
-
-    bsg_kscrash_reinstall(
-        [self.crashReportPath UTF8String], [self.recrashReportPath UTF8String],
-        [self.stateFilePath UTF8String], [self.nextCrashID UTF8String]);
+    free(callstack);
 }
 
 // ============================================================================

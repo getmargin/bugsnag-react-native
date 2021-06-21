@@ -28,8 +28,8 @@ typedef NS_ENUM(NSUInteger, SeverityReasonType) {
 @property(nonatomic, readonly) BSGSeverity originalSeverity;
 @property(nonatomic) BSGSeverity currentSeverity;
 @property(nonatomic, readonly) SeverityReasonType calculateSeverityReasonType;
-@property(nonatomic, readonly) NSString *attrValue;
-@property(nonatomic, readonly) NSString *attrKey;
+@property(nonatomic, readonly, strong) NSString *attrValue;
+@property(nonatomic, readonly, strong) NSString *attrKey;
 
 + (NSString *)stringFromSeverityReason:(SeverityReasonType)severityReason;
 + (SeverityReasonType)severityReasonFromString:(NSString *)string;
@@ -41,6 +41,11 @@ typedef NS_ENUM(NSUInteger, SeverityReasonType) {
                     (SeverityReasonType)severityReason
                                       severity:(BSGSeverity)severity
                                      attrValue:(NSString *)attrValue;
+
+- (instancetype)initWithSeverityReason:(SeverityReasonType)severityReason
+                              severity:(BSGSeverity)severity
+                             unhandled:(BOOL)unhandled
+                             attrValue:(NSString *)attrValue;
 
 - (NSDictionary *)toJson;
 

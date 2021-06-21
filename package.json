@@ -3,7 +3,7 @@
   "homepage": "https://www.bugsnag.com/platforms/react-native-error-reporting/",
   "repository": "https://github.com/bugsnag/bugsnag-react-native.git",
   "bugs": "https://github.com/bugsnag/bugsnag-react-native/issues",
-  "version": "2.21.0",
+  "version": "2.23.10",
   "license": "MIT",
   "main": "index.js",
   "types": "index.d.ts",
@@ -21,8 +21,10 @@
     "android",
     "cocoa/BugsnagReactNative.{h,m,xcodeproj}",
     "cocoa/vendor/bugsnag-cocoa/Source/**/*.{h,m,mm,cpp,c}",
+    "cocoa/vendor/bugsnag-cocoa/Configurations/Config.xcconfig",
     "cocoa/vendor/bugsnag-cocoa/iOS/{Bugsnag.xcodeproj,Info.plist,module.modulemap}",
-    "BugsnagReactNative.podspec"
+    "BugsnagReactNative.podspec",
+    "react-native.config.js"
   ],
   "scripts": {
     "prepublish": "mkdir -p lib && babel --source-maps --out-dir='lib' --ignore='__tests__' src",
@@ -62,8 +64,9 @@
     "babel-jest": "^21.0.2",
     "babel-preset-react-native": "^1.9.1",
     "jest": "^21.1.0",
+    "react-native": "^0.60.5",
     "standard": "^11.0.0",
     "tslint": "^5.8.0",
-    "typescript": "^2.6.1"
+    "typescript": "^3.5.3"
   }
 }

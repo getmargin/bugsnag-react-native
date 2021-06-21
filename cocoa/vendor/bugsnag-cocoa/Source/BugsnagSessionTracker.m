@@ -91,7 +91,7 @@ NSString *const BSGSessionUpdateNotification = @"BugsnagSessionChanged";
 }
 
 - (void)startNewSessionIfAutoCaptureEnabled {
-    if (self.config.shouldAutoCaptureSessions  && [self.config shouldSendReports]) {
+    if (self.config.autoTrackSessions) {
         [self startNewSessionWithAutoCaptureValue:YES];
     }
 }
@@ -165,7 +165,23 @@ NSString *const BSGSessionUpdateNotification = @"BugsnagSessionChanged";
 
     @synchronized (session) {
         session.handledCount++;
-        if (self.callback && (self.config.shouldAutoCaptureSessions || !session.autoCaptured)) {
+        if (self.callback) {
+            self.callback(session);
+        }
+        [self postUpdateNotice];
+    }
+}
+
+- (void)handleUnhandledErrorEvent {
+    BugsnagSession *session = [self runningSession];
+
+    if (session == nil) {
+        return;
+    }
+
+    @synchronized (session) {
+        session.unhandledCount++;
+        if (self.callback) {
             self.callback(session);
         }
         [self postUpdateNotice];

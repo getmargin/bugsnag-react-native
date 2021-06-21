@@ -1,10 +1,13 @@
 package com.bugsnag;
 
+import com.bugsnag.BugsnagReactNative;
 import com.bugsnag.android.BreadcrumbType;
 import com.bugsnag.android.Bugsnag;
 import com.bugsnag.android.Client;
 import com.bugsnag.android.Configuration;
 import com.bugsnag.android.InternalHooks;
+import com.bugsnag.android.JavaScriptException;
+import com.bugsnag.android.Notifier;
 
 import android.content.Context;
 
@@ -27,7 +30,7 @@ public class BugsnagReactNative extends ReactContextBaseJavaModule {
     private ReactContext reactContext;
     private String libraryVersion;
     private String bugsnagAndroidVersion;
-    static final Logger logger = Logger.getLogger("bugsnag-react-native");
+    public static final Logger logger = Logger.getLogger("bugsnag-react-native");
 
     public static ReactPackage getPackage() {
         return new BugsnagPackage();
@@ -105,7 +108,7 @@ public class BugsnagReactNative extends ReactContextBaseJavaModule {
     }
 
     /**
-     * Configures the bugsnag client with configuration options from the JS layer, starting a new 
+     * Configures the bugsnag client with configuration options from the JS layer, starting a new
      * client if one has not already been created.
      *
      * @param options the JS configuration object
@@ -118,7 +121,7 @@ public class BugsnagReactNative extends ReactContextBaseJavaModule {
         }
         Client client = getClient(apiKey);
         libraryVersion = options.getString("version");
-        bugsnagAndroidVersion = client.getClass().getPackage().getSpecificationVersion();
+        bugsnagAndroidVersion = Notifier.getInstance().getVersion();
         configureRuntimeOptions(client, options);
         InternalHooks.configureClient(client);
 
@@ -126,7 +129,7 @@ public class BugsnagReactNative extends ReactContextBaseJavaModule {
                 libraryVersion,
                 bugsnagAndroidVersion));
     }
-    
+
     /**
      * Leaves a breadcrumb from the JS layer.
      *
@@ -141,7 +144,7 @@ public class BugsnagReactNative extends ReactContextBaseJavaModule {
     }
 
     /**
-     * Notifies the native client that a JS error occurred. Upon invoking this method, an 
+     * Notifies the native client that a JS error occurred. Upon invoking this method, an
      * error report will be generated and delivered via the native client.
      *
      * @param payload information about the JS error

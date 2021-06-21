@@ -39,7 +39,7 @@ extern NSString *const BSGSessionUpdateNotification;
 
 /**
  Record a new auto-captured session if neededed. Auto-captured sessions are only
- recorded and sent if -[BugsnagConfiguration shouldAutoCaptureSessions] is YES
+ recorded and sent if -[BugsnagConfiguration autoTrackSessions] is YES
  */
 - (void)startNewSessionIfAutoCaptureEnabled;
 
@@ -75,6 +75,13 @@ extern NSString *const BSGSessionUpdateNotification;
  a session exists.
  */
 - (void)handleHandledErrorEvent;
+
+/**
+ Handled Bugsnag.notify() being called with an event with unhandled = YES.
+ Increases the number of unhandled errors recorded for the current session, if
+ a session exists.
+ */
+- (void)handleUnhandledErrorEvent;
 
 /**
  * Retrieves the running session, or nil if the session is stopped or has not yet been started/resumed.
